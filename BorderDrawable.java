@@ -296,16 +296,17 @@ public class BorderDrawable extends Drawable {
 
         if (mPaint == null) {
             mPaint = new Paint();
+            mPaint.setAntiAlias(true);
         }
         if (mPath == null) {
             mPath = new Path();
         }
-        mPaint.setAntiAlias(true);
 
         // 图像大小相同的话，直接清屏
         if (mBitmap != null && size.ceilEquals(mBitmapSize)) {
             mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
             mCanvas.drawPaint(mPaint);
+            mPaint.setXfermode(null);
         } else {
             freeBitmap();
             mBitmap = Bitmap.createBitmap(
@@ -403,7 +404,6 @@ public class BorderDrawable extends Drawable {
         // RIGHT
         if (mBorderInsets.right > 0) {
 
-            mPath.reset();
             mPath.moveTo(size.width, 0);
             mPath.lineTo(topRight.x, topRight.y);
             mPath.lineTo(bottomRight.x, bottomRight.y);
@@ -412,12 +412,12 @@ public class BorderDrawable extends Drawable {
 
             mPaint.setColor(mBorderColors.right);
             mCanvas.drawPath(mPath, mPaint);
+            mPath.reset();
         }
 
         // BOTTOM
         if (mBorderInsets.bottom > 0) {
 
-            mPath.reset();
             mPath.moveTo(0, size.height);
             mPath.lineTo(bottomLeft.x, bottomLeft.y);
             mPath.lineTo(bottomRight.x, bottomRight.y);
@@ -426,12 +426,12 @@ public class BorderDrawable extends Drawable {
 
             mPaint.setColor(mBorderColors.bottom);
             mCanvas.drawPath(mPath, mPaint);
+            mPath.reset();
         }
 
         // LEFT
         if (mBorderInsets.left > 0) {
 
-            mPath.reset();
             mPath.moveTo(0, 0);
             mPath.lineTo(topLeft.x, topLeft.y);
             mPath.lineTo(bottomLeft.x, bottomLeft.y);
@@ -440,12 +440,12 @@ public class BorderDrawable extends Drawable {
 
             mPaint.setColor(mBorderColors.left);
             mCanvas.drawPath(mPath, mPaint);
+            mPath.reset();
         }
 
         // TOP
         if (mBorderInsets.top > 0) {
 
-            mPath.reset();
             mPath.moveTo(0, 0);
             mPath.lineTo(topLeft.x, topLeft.y);
             mPath.lineTo(topRight.x, topRight.y);
@@ -454,6 +454,7 @@ public class BorderDrawable extends Drawable {
 
             mPaint.setColor(mBorderColors.top);
             mCanvas.drawPath(mPath, mPaint);
+            mPath.reset();
         }
 
         // 只有在内部有圆角的情况下需要抠出圆角
@@ -466,11 +467,14 @@ public class BorderDrawable extends Drawable {
                     size.width - mBorderInsets.right,
                     size.height - mBorderInsets.bottom);
 
-            mPath.reset();
+
             mPath.addRoundRect(innerRect, innerRadii, Path.Direction.CW);
             mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
             mPaint.setAlpha(0);
             mCanvas.drawPath(mPath, mPaint);
+            mPaint.setAlpha(ALPHA_SOLID);
+            mPaint.setXfermode(null);
+            mPath.reset();
         }
 
         // 有背景时，在边框后面绘制背景 DST_OVER
@@ -478,6 +482,7 @@ public class BorderDrawable extends Drawable {
             mPaint.setColor(mBackgroundColor);
             mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OVER));
             mCanvas.drawPaint(mPaint);
+            mPaint.setXfermode(null);
         }
 
         // 如果有圆角，抠出外框
@@ -492,14 +497,14 @@ public class BorderDrawable extends Drawable {
 
             Canvas clipCanvas = new Canvas(clipImg);
 
-            mPath.reset();
             mPath.addRoundRect(outterRect, outterRadii, Path.Direction.CW);
             mPaint.setColor(Color.BLACK);
             clipCanvas.drawPath(mPath, mPaint);
 
             mPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
-            //paint.setXfermode(null);
             mCanvas.drawBitmap(clipImg, 0, 0, mPaint);
+            mPaint.setXfermode(null);
+            mPath.reset();
             clipImg.recycle();
         }
 
@@ -515,8 +520,8 @@ public class BorderDrawable extends Drawable {
                 paint);
         //*/
 
-        mPath.reset();
-        mPaint.reset();
+        //mPath.reset();
+        //mPaint.reset();
 
         //构造 NinePatchDrawable
         ByteBuffer buffer = getByteBuffer(
@@ -541,10 +546,10 @@ public class BorderDrawable extends Drawable {
                 "border-right-width:" + mBorderInsetsSpacing.get(RIGHT, 0f) + ";\n" +
                 "border-bottom-width:" + mBorderInsetsSpacing.get(BOTTOM, 0f) + ";\n" +
                 "border-left-width:" + mBorderInsetsSpacing.get(LEFT, 0f) + ";\n" +
-                "border-top-color:" + mBorderColorsSpacing.get(TOP, Color.BLACK) + ";\n" +
-                "border-right-color:" + mBorderColorsSpacing.get(RIGHT, Color.BLACK) + ";\n" +
-                "border-bottom-color:" + mBorderColorsSpacing.get(BOTTOM, Color.BLACK) + ";\n" +
-                "border-left-color:" + mBorderColorsSpacing.get(LEFT, Color.BLACK) + ";\n" +
+                "border-top-color:" + String.format("#%06X", (0xFFFFFF & mBorderColorsSpacing.get(TOP, Color.BLACK))) + ";\n" +
+                "border-right-color:" + String.format("#%06X", (0xFFFFFF & mBorderColorsSpacing.get(RIGHT, Color.BLACK))) + ";\n" +
+                "border-bottom-color:" + String.format("#%06X", (0xFFFFFF & mBorderColorsSpacing.get(BOTTOM, Color.BLACK))) + ";\n" +
+                "border-left-color:" + String.format("#%06X", (0xFFFFFF & mBorderColorsSpacing.get(LEFT, Color.BLACK))) + ";\n" +
                 "border-top-left-radius:" + mBorderRadiiSpacing.get(TOP_LEFT, 0f) + ";\n" +
                 "border-top-right-radius:" + mBorderRadiiSpacing.get(TOP_RIGHT, 0f) + ";\n" +
                 "border-bottom-right-radius:" + mBorderRadiiSpacing.get(BOTTOM_RIGHT, 0f) + ";\n" +
